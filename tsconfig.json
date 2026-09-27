@@ -6,7 +6,7 @@
         "target": "ESNext", // Sets the JavaScript version output
         "types": ["node"], // Loads Node.js type definitions explicitly
         "skipLibCheck": true, // Skips type checking of declaration files (*.d.ts)
-        "allowJs": true, // Allows JavaScript files in the project
+        //"allowJs": true, // Allows JavaScript files in the project
         "resolveJsonModule": true, // Allows importing JSON modules
         "moduleDetection": "force", // Treats all files as modules regardless of import/export
         "isolatedModules": true, // Ensures each file can be transpiled independently
