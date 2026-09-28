@@ -38,19 +38,23 @@
     "#models": {
       "development": "./src/models/index.ts",
       "default": "./dist/models/index.js"
-    },    
+    },
     "#schemas": {
       "development": "./src/schemas/index.ts",
       "default": "./dist/schemas/index.js"
-    },    
+    },
     "#routes": {
       "development": "./src/routes/index.ts",
       "default": "./dist/routes/index.js"
-    },        
+    },
     "#controllers": {
       "development": "./src/controllers/index.ts",
       "default": "./dist/controllers/index.js"
-    }              
+    },
+    "#middleware": {
+      "development": "./src/middleware/index.ts",
+      "default": "./dist/middleware/index.js"
+    }
   },
   "repository": {
     "type": "git",
