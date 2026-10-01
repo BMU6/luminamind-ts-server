@@ -14,6 +14,7 @@ export const medicationInputSchema = z.strictObject({
   }),
 
   effect: z.string().trim().default(""),
+  userId: z.string().trim().min(1, { message: "User ID is required" }),
 });
 
 export const medicationOutputSchema = medicationInputSchema.extend({
