@@ -19,7 +19,10 @@ export const getMedications: RequestHandler<
   MedicationOutputDTO[] | { error: string }
 > = async (req, res) => {
   try {
-    const medications = await MedicationList.find();
+    const { userId } = req.query;
+
+    const filter = typeof userId === "string" ? { userId } : {};
+    const medications = await MedicationList.find(filter);
     res.json(medications as MedicationOutputDTO[]);
   } catch (error: unknown) {
     if (error instanceof Error) {
@@ -51,20 +54,33 @@ export const createMedication: RequestHandler<
   }
 };
 
-// export const getMedicationById: RequestHandler<
-//   IDParams,
-//   MedicationOutputDTO | { error: string }
-// > = async (req, res) => {
+// export const getMedicationsByUserId: RequestHandler<
+//   unknown,
+//   MedicationOutputDTO[] | { error: string }
+// > = async (req, res, next) => {
 //   try {
-//     const user = await MedicationList.findById(req.params.id);
-//     if (!user) return res.status(404).json({ error: "Medication not found" });
-//     res.json(user);
-//   } catch (error: unknown) {
-//     if (error instanceof Error) {
-//       res.status(500).json({ error: error.message });
-//     } else {
-//       res.status(500).json({ error: "An unknown error occurred" });
-//     }
+//     const { userId } = req.query;
+
+//     const filter = typeof userId === "string" ? { userId } : {};
+
+//     const medications = await MedicationList.find(filter).lean();
+
+//     const formattedMedications: MedicationOutputDTO[] = (medications as any[]).map(
+//       (medicine) => ({
+//         _id: medicine._id,
+//         name: medicine.name,
+//         dosage: medicine.dosage,
+//         effect: medicine.effect,
+//         schedule: medicine.schedule,
+//         userId: medicine.userId ? medicine.userId.toString() : "",
+//         createdAt: medicine.createdAt,
+//         updatedAt: medicine.updatedAt,
+//       }),
+//     );
+
+//     return res.json(formattedMedications);
+//   } catch (error) {
+//     next(error);
 //   }
 // };
 

@@ -25,6 +25,12 @@ const medicationSchema = new Schema(
       trim: true,
       default: "",
     },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "User ID is required to link medication logs"],
+      index: true,
+    },
   },
   {
     timestamps: true,
