@@ -2,7 +2,7 @@ import "#db";
 import cors from "cors";
 import express from "express";
 import cookieParser from "cookie-parser";
-import { authRoutes, medicationRouter } from "#routes";
+import { authRoutes, medicationRouter, reportRouter } from "#routes";
 import { errorHandler, notFoundHandler } from "#middleware";
 import { CLIENT_BASE_URL, PORT } from "#config";
 
@@ -20,6 +20,7 @@ app.use(express.json(), cookieParser());
 
 app.use("/auth", authRoutes);
 app.use("/medicationlist", medicationRouter);
+app.use("/reports", reportRouter);
 app.use("*splat", notFoundHandler);
 app.use(errorHandler);
 
