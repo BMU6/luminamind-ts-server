@@ -71,4 +71,7 @@ const reportSchema = new Schema(
   },
 );
 
+// Every Home query is "reports of ONE user in a time range"
+reportSchema.index({ userId: 1, date: 1 });
+
 export default model("Report", reportSchema);
