@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, type InferSchemaType, type Types } from "mongoose";
 
 const medicationSchema = new Schema(
   {
@@ -36,5 +36,7 @@ const medicationSchema = new Schema(
     timestamps: true,
   },
 );
+
+// export type MedicationRecord = InferSchemaType<typeof medicationSchema> & { _id: Types.ObjectId };
 
 export default model("Medication", medicationSchema);

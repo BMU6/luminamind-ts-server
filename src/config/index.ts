@@ -13,7 +13,7 @@ const envSchema = z.object({
     })
     .min(64),
   CLIENT_BASE_URL: z.url().default('http://localhost:5173'),
-  PORT: z.int().default(3000)
+  PORT: z.coerce.number().int().default(3000),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
