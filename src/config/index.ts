@@ -14,6 +14,10 @@ const envSchema = z.object({
     .min(64),
   CLIENT_BASE_URL: z.url().default('http://localhost:5173'),
   PORT: z.coerce.number().int().default(3000),
+
+  // AI summary: local Ollama during development
+  OLLAMA_BASE_URL: z.url().default('http://localhost:11434/api'),
+  AI_MODEL: z.string().default('llama3.1:8b'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
@@ -31,5 +35,7 @@ export const {
   MONGO_URI,
   REFRESH_TOKEN_TTL,
   SALT_ROUNDS,
-  PORT
+  PORT,
+  OLLAMA_BASE_URL,
+  AI_MODEL
 } = parsedEnv.data;
