@@ -5,8 +5,9 @@ import type { Types } from "mongoose";
 import { MedicationList } from "#models";
 
 type MedicationInputDTO = z.infer<typeof medicationInputSchema>;
-type MedicationOutputDTO = MedicationInputDTO & {
-  _id: InstanceType<typeof Types.ObjectId>;
+type MedicationOutputDTO = Omit<MedicationInputDTO, "userId"> & {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId; // in the database it is an ObjectId, JSON turns it into a string
   createdAt: Date;
   updatedAt: Date;
 };
@@ -22,6 +23,11 @@ export const getMedications: RequestHandler<
     const { userId } = req.query;
 
     const filter = typeof userId === "string" ? { userId } : {};
+    // this would also work. but we need a kind of cast here because nested schedule can't
+    // be handeled just by fine() like in some bootcamp exercises done.
+    // lean btw makes out of a complete mongoose object just a data object.
+    // I used as MedicationOutputDTO[]
+    // const medications = await MedicationList.find(filter).lean<MedicationOutputDTO[]>();
     const medications = await MedicationList.find(filter);
     res.json(medications as MedicationOutputDTO[]);
   } catch (error: unknown) {
@@ -85,9 +91,9 @@ export const createMedication: RequestHandler<
 // };
 
 export const updateMedication: RequestHandler<
-  IDParams,
-  MedicationOutputDTO | { error: string },
-  MedicationInputDTO
+   IDParams,
+   MedicationOutputDTO | { error: string }
+  // MedicationInputDTO
 > = async (req, res) => {
   try {
     const {

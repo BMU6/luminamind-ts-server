@@ -15,7 +15,7 @@ const userSchema = new Schema(
     },
     roles: {
       type: [String],
-      default: ['user']
+      default: ['patient']
     }
   },
   {
