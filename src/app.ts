@@ -26,5 +26,5 @@ app.use("*splat", notFoundHandler);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`Auth Server listening on http://localhost:${PORT}`);
+  console.log(`LuminaMind Server listening on http://localhost:${PORT}`);
 });

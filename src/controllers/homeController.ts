@@ -2,6 +2,7 @@ import type { RequestHandler } from "express";
 import type { Types } from "mongoose";
 import { Report } from "#models";
 import { reportRangeSchema } from "#schemas";
+import { summarizeReports } from "../ai/summaryAgent.ts";
 
 // What the client gets back. The medication snapshot is stored inside the report, so no populate is needed.
 type HomeReportDTO = {
@@ -34,4 +35,23 @@ export const getHomeReports: RequestHandler<unknown, HomeReportDTO[]> = async (r
     .lean<HomeReportDTO[]>();
 
   res.json(reports);
+};
+
+// POST /home/summary  { from, to }  -> AI summary of the check-ins of the logged-in user in that range
+export const summarizeHomeReports: RequestHandler<unknown, { summary: string }> = async (req, res) => {
+  const userId = req.user?.id;
+  if (!userId) throw new Error("Authentication required.", { cause: { status: 401 } });
+
+  const { data, error, success } = reportRangeSchema.safeParse(req.body);
+  if (!success) {
+    throw new Error(error.issues.map((issue) => issue.message).join(", "), { cause: { status: 400 } });
+  }
+
+  try {
+    const summary = await summarizeReports(userId, data.from, data.to);
+    res.json({ summary });
+  } catch (error) {
+    console.error("AI summary failed:", error);
+    throw new Error("The AI service is not available. Is Ollama running?", { cause: { status: 503 } });
+  }
 };

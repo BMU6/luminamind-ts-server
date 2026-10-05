@@ -67,6 +67,7 @@
   },
   "homepage": "https://github.com/BMU6/luminamind-ts-server#readme",
   "dependencies": {
+    "ai": "^7.0.127",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -75,6 +76,7 @@
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.10.2",
+    "ollama-ai-provider-v2": "^4.0.1",
     "socket.io": "^4.8.4",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
