@@ -144,7 +144,6 @@ import { z } from "zod";
 
 // Types for request params and query parameters to ensure full safety
 type IDParams = { id: string };
-type ReportQuery = { userId?: string };
 
 /**
  * 1. GET ALL REPORTS
@@ -153,18 +152,11 @@ type ReportQuery = { userId?: string };
  */
 export const getReports: RequestHandler<
   unknown,
-  any[] | { error: string },
-  unknown,
-  ReportQuery
+  any[] | { error: string }
 > = async (req, res) => {
   try {
-    const userId = req.query.userId as string;
-
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ error: "User ID query parameter is required." });
-    }
+    // the owner comes from the access token, never from the client
+    const userId = req.user!.id;
 
     // Enforce matching string filter constraints on the Mongoose lookup query
     const historicalReports = await Report.find({ userId })
@@ -204,7 +196,7 @@ export const createReport: RequestHandler<
 
     // 2. Instantiate and compile a new Mongoose document matching the model parameters
     const newReport = new Report({
-      userId: validatedData.userId,
+      userId: req.user!.id, // from the token
       mood: validatedData.mood,
       concentration: validatedData.concentration,
       irritability: validatedData.irritability,
@@ -243,7 +235,7 @@ export const getReportById: RequestHandler<IDParams> = async (req, res) => {
   try {
     const { id } = req.params; // Correctly pulls from the /:id param we mapped above
 
-    const targetReport = await Report.findById(id).lean();
+    const targetReport = await Report.findOne({ _id: id, userId: req.user!.id }).lean();
 
     if (!targetReport) {
       return res
@@ -319,8 +311,8 @@ export const updateReport: RequestHandler<
     const validatedData = req.body;
 
     // 2. Use Mongoose \$set to cleanly override the modified metrics array parameters
-    const updatedReport = await Report.findByIdAndUpdate(
-      id,
+    const updatedReport = await Report.findOneAndUpdate(
+      { _id: id, userId: req.user!.id }, // only your own reports
       { $set: validatedData }, // Safely patches only the keys sent by the frontend
       {
         new: true, // Returns the fresh updated document array state
@@ -358,7 +350,7 @@ export const deleteReport: RequestHandler<
 > = async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedReport = await Report.findByIdAndDelete(id);
+    const deletedReport = await Report.findOneAndDelete({ _id: id, userId: req.user!.id });
 
     if (!deletedReport) {
       return res.status(404).json({

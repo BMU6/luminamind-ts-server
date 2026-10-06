@@ -5,7 +5,7 @@ import type { Types } from "mongoose";
 import { MedicationList } from "#models";
 
 type MedicationInputDTO = z.infer<typeof medicationInputSchema>;
-type MedicationOutputDTO = Omit<MedicationInputDTO, "userId"> & {
+type MedicationOutputDTO = MedicationInputDTO & {
   _id: Types.ObjectId;
   userId: Types.ObjectId; // in the database it is an ObjectId, JSON turns it into a string
   createdAt: Date;
@@ -20,9 +20,8 @@ export const getMedications: RequestHandler<
   MedicationOutputDTO[] | { error: string }
 > = async (req, res) => {
   try {
-    const { userId } = req.query;
-
-    const filter = typeof userId === "string" ? { userId } : {};
+    // the owner comes from the access token (set by accessHandler), never from the client
+    const filter = { userId: req.user!.id };
     // this would also work. but we need a kind of cast here because nested schedule can't
     // be handeled just by fine() like in some bootcamp exercises done.
     // lean btw makes out of a complete mongoose object just a data object.
@@ -45,9 +44,10 @@ export const createMedication: RequestHandler<
   MedicationInputDTO
 > = async (req, res) => {
   try {
-    const newUser = await MedicationList.create(
-      req.body satisfies MedicationInputDTO,
-    );
+    const newUser = await MedicationList.create({
+      ...(req.body satisfies MedicationInputDTO),
+      userId: req.user!.id,
+    });
     //const newUser = await User.create<MedicationInputDTO>(req.body);
 
     res.status(201).json(newUser as MedicationOutputDTO);
@@ -91,21 +91,17 @@ export const createMedication: RequestHandler<
 // };
 
 export const updateMedication: RequestHandler<
-   IDParams,
-   MedicationOutputDTO | { error: string }
-  // MedicationInputDTO
+  IDParams,
+  MedicationOutputDTO | { error: string },
+  MedicationInputDTO
 > = async (req, res) => {
   try {
     const {
-      body,
+      body: { name, dosage, effect, schedule }, // already validated by validateBody; effect may be empty
       params: { id },
     } = req;
-    const { name, dosage, effect, schedule } = body;
-    if (!name || !dosage || !effect || !schedule)
-      return res
-        .status(400)
-        .json({ error: "name, dosage, effect and time are required" });
-    const medication = await MedicationList.findById(id);
+    // only a medication of the logged-in user can be found, so nobody can change someone else's
+    const medication = await MedicationList.findOne({ _id: id, userId: req.user!.id });
     if (!medication)
       return res.status(404).json({ error: "Medication not found" });
     medication.dosage = dosage;
@@ -132,7 +128,7 @@ export const deleteMedication: RequestHandler<
     const {
       params: { id },
     } = req;
-    const medication = await MedicationList.findByIdAndDelete(id);
+    const medication = await MedicationList.findOneAndDelete({ _id: id, userId: req.user!.id });
     if (!medication)
       return res.status(404).json({ error: "Medication not found" });
     res.json({ message: "Medication deleted successfully" });
