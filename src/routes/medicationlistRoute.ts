@@ -6,12 +6,16 @@ import {
   deleteMedication,
 } from "#controllers";
 
-import { validateBody } from "#middleware";
+import { accessHandler, authorize, validateBody } from "#middleware";
 import { medicationInputSchema } from "#schemas";
 
 //const medicationUpdateSchema = medicationInputSchema.partial();
 
 const medicationRouter = Router();
+
+// Who are you (token) and may you (role)? For every medication route.
+medicationRouter.use(accessHandler, authorize("patient"));
+
 medicationRouter
   .route("/")
   .get(getMedications)

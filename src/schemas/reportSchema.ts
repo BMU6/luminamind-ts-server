@@ -48,10 +48,7 @@
 import { z } from "zod";
 
 export const reportInputSchema = z.object({
-  userId: z
-    .string()
-    .regex(/^[0-9a-fA-F]{24}$/, "Invalid User ID format template"),
-
+  // no userId here: the owner is taken from the access token on the server
   mood: z
     .number()
     .min(0, "Mood cannot be below 0")

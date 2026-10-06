@@ -7,10 +7,14 @@ import {
   deleteReport,
 } from "#controllers";
 
-import { validateBody } from "#middleware";
+import { accessHandler, authorize, validateBody } from "#middleware";
 import { reportInputSchema } from "#schemas";
 const reportUpdateSchema = reportInputSchema.partial();
 const reportRouter = Router();
+
+// Who are you (token) and may you (role)? For every report route.
+reportRouter.use(accessHandler, authorize("patient"));
+
 reportRouter
   .route("/")
   .get(getReports)
