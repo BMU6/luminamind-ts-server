@@ -65,6 +65,12 @@ const reportSchema = new Schema(
       trim: true,
       default: "",
     },
+    // NEW: Stores structured text parameters processed locally by Llama 3.1:8b
+    aiAnalysis: {
+      extractedSideEffects: { type: [String], default: [] },
+      emotionalSentiment: { type: String, default: "Neutral" },
+      isFlaggedForReview: { type: Boolean, default: false },
+    },
   },
   {
     timestamps: true,
