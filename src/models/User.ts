@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model } from "mongoose";
 
 const userSchema = new Schema(
   {
@@ -6,21 +6,31 @@ const userSchema = new Schema(
       type: String,
       required: true,
       unique: true,
-      lowercase: true
+      lowercase: true,
     },
     password: {
       type: String,
       required: true,
-      select: false
+      select: false,
     },
     roles: {
       type: [String],
-      default: ['patient']
-    }
+      // UPDATED: Restricts roles strictly to valid clinical platform states
+      enum: ["user", "patient", "doctor"],
+      default: ["patient"],
+    },
+    // NEW: Handles the bidirectional digital handshake pointers between roles
+    connectedUsers: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        index: true, // Keeps list queries fast when populating the doctor directory panel
+      },
+    ],
   },
   {
-    timestamps: true
-  }
+    timestamps: true,
+  },
 );
 
-export default model('User', userSchema);
+export default model("User", userSchema);
