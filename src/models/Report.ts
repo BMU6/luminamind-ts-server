@@ -1,4 +1,5 @@
 import { Schema, model, type Document } from "mongoose";
+import { encrypted, fieldEncryption } from "#utils";
 
 const reportSchema = new Schema(
   {
@@ -26,8 +27,8 @@ const reportSchema = new Schema(
           ref: "Medication", // <-- Explicitly references your Medication model
           required: [true, "Medication link identifier is required"],
         },
-        name: { type: String, required: true },
-        dosage: { type: String, required: true },
+        name: { type: String, required: true, ...encrypted },
+        dosage: { type: String, required: true, ...encrypted },
       },
     ],
     mood: {
@@ -64,11 +65,12 @@ const reportSchema = new Schema(
       type: String,
       trim: true,
       default: "",
+      ...encrypted,
     },
     // NEW: Stores structured text parameters processed locally by Llama 3.1:8b
     aiAnalysis: {
-      extractedSideEffects: { type: [String], default: [] },
-      emotionalSentiment: { type: String, default: "Neutral" },
+      extractedSideEffects: { type: [{ type: String, ...encrypted }], default: [] },
+      emotionalSentiment: { type: String, default: "Neutral", ...encrypted },
       isFlaggedForReview: { type: Boolean, default: false },
     },
   },
@@ -79,5 +81,7 @@ const reportSchema = new Schema(
 
 // Every Home query is "reports of ONE user in a time range"
 reportSchema.index({ userId: 1, date: 1 });
+
+reportSchema.plugin(fieldEncryption); // message, aiAnalysis texts and the medication snapshot are stored encrypted
 
 export default model("Report", reportSchema);

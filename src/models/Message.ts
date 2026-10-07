@@ -1,4 +1,5 @@
 import { Schema, model } from "mongoose";
+import { encrypted, fieldEncryption } from "#utils";
 
 const messageSchema = new Schema(
   {
@@ -18,6 +19,7 @@ const messageSchema = new Schema(
       type: String,
       required: [true, "Message text content cannot be blank"],
       trim: true,
+      ...encrypted,
     },
   },
   {
@@ -28,5 +30,7 @@ const messageSchema = new Schema(
 
 // Compiles a compound index for fast, chronological chat message history fetching
 messageSchema.index({ senderId: 1, receiverId: 1, createdAt: 1 });
+
+messageSchema.plugin(fieldEncryption); // text is stored encrypted
 
 export default model("Message", messageSchema);
