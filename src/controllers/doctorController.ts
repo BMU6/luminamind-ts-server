@@ -1,27 +1,39 @@
 import type { RequestHandler } from "express";
-import { User } from "#models";
-import { Report } from "#models";
+import { User, Report } from "#models";
 
 /**
  * 1. POST /doctor/doctor/generate-code
- * Doctor generates a short invitation token code to connect a patient
+ * Doctor generates a short invitation token code and saves it to their profile document
  */
 export const generateInviteCode: RequestHandler = async (req, res, next) => {
   try {
     const doctorId = req.user?.id;
-    if (!doctorId)
+    if (!doctorId) {
       return res
         .status(401)
         .json({ error: "Authentication verified footprint missing." });
+    }
 
     // Generate a quick, presentation-friendly uppercase code string
     const shortCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    // In a fully scaled cloud setup, you would persist this code to a cache collection.
-    // For your MVP presentation, return it directly to display on the dashboard UI.
+    // Persist the active generated token code dynamically directly onto this doctor's profile document record
+    const updatedDoctor = await User.findByIdAndUpdate(
+      doctorId,
+      { inviteCode: shortCode },
+      { new: true },
+    );
+
+    if (!updatedDoctor) {
+      return res
+        .status(404)
+        .json({ error: "Doctor identity profile not found." });
+    }
+
     res.status(201).json({
       code: shortCode,
-      message: "Invitation token code created successfully.",
+      message:
+        "Invitation token code created successfully and bound to session.",
     });
   } catch (error) {
     next(error);
@@ -30,85 +42,54 @@ export const generateInviteCode: RequestHandler = async (req, res, next) => {
 
 /**
  * 2. POST /doctor/patient/redeem-code
- * Patient inputs the clinician credentials body payload to authorize a handshake link
+ * Patient inputs the 6-character token; system finds the doctor dynamically matching that code
  */
-// export const redeemInviteCode: RequestHandler = async (req, res, next) => {
-//   try {
-//     const patientId = req.user?.id;
-//     const { code } = req.body; // In your MVP layout validation, this matches our Zod rules
-
-//     if (!patientId)
-//       return res
-//         .status(401)
-//         .json({ error: "Patient context tracking missing." });
-//     if (!code)
-//       return res
-//         .status(400)
-//         .json({ error: "Connection handshake code is required." });
-
-//     // For the presentation handshake demonstration, we find the staging doctor profile.
-//     // In your seed script, doctor@luminamind.com is hardcoded for convenience.
-//     const targetDoctor = await User.findOne({ roles: "doctor" });
-//     if (!targetDoctor) {
-//       return res
-//         .status(404)
-//         .json({
-//           error: "No active clinician profile found in the database layer.",
-//         });
-//     }
-
-//     // Use \$addToSet to atomically append bidirectional IDs without causing duplication mismatches
-//     await User.findByIdAndUpdate(patientId, {
-//       $addToSet: { connectedUsers: targetDoctor._id },
-//     });
-//     await User.findByIdAndUpdate(targetDoctor._id, {
-//       $addToSet: { connectedUsers: patientId },
-//     });
-
-//     res
-//       .status(200)
-//       .json({
-//         message: "Clinical connection handshake established successfully!",
-//       });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
 export const redeemInviteCode: RequestHandler = async (req, res, next) => {
   try {
     const patientId = req.user?.id;
     const { code } = req.body;
 
-    if (!patientId)
+    if (!patientId) {
       return res
         .status(401)
         .json({ error: "Patient context tracking missing." });
-    if (!code)
+    }
+    if (!code) {
       return res
         .status(400)
         .json({ error: "Connection handshake code is required." });
+    }
 
-    // UPDATED: Dynamically find the doctor profile who belongs to this session context.
-    // Instead of looking up a hardcoded string, look up the clinician profile directly.
+    const cleanCode = code.toUpperCase().trim();
+
+    // FIXED: Dynamically find the doctor profile who owns this specific code.
+    // No hardcoded emails or strings are used here anymore.
     const targetDoctor = await User.findOne({
-      email: "doctor@user.com",
+      inviteCode: cleanCode,
       roles: "doctor",
     });
+
     if (!targetDoctor) {
       return res.status(404).json({
-        error: "No active clinician profile found matching this workspace.",
+        error:
+          "Invalid or expired connection code token. Please request a new token code from your doctor.",
       });
     }
 
-    // COMPLETE BIDIRECTIONAL SAVES:
-    // 1. Atomically append the Patient's ID into the Doctor's connectedUsers array array
+    // COMPLETE SECURE BIDIRECTIONAL HANDSHAKE LINK SAVES:
+    // 1. Atomically append the Patient's ID into the Doctor's connectedUsers array
     await User.findByIdAndUpdate(targetDoctor._id, {
       $addToSet: { connectedUsers: patientId },
     });
 
-    // 2. Atomically append the Doctor's ID into the Patient's connectedUsers array array
+    // 2. Atomically append the Doctor's ID into the Patient's connectedUsers array
     await User.findByIdAndUpdate(patientId, {
       $addToSet: { connectedUsers: targetDoctor._id },
+    });
+
+    // Consume/clear the token code directly out of the doctor's document to complete the lifecycle
+    await User.findByIdAndUpdate(targetDoctor._id, {
+      $set: { inviteCode: null },
     });
 
     res.status(200).json({
@@ -142,7 +123,6 @@ export const getMyConnectedPatients: RequestHandler = async (
         .status(404)
         .json({ error: "Doctor identity profile not found." });
 
-    // Cross-reference each patient to check if they have reports flagged for review by the local AI
     const patientListWithAlerts = await Promise.all(
       (doctorProfile.connectedUsers as any[]).map(async (patient) => {
         const structuralAlertCheck = await Report.findOne({
@@ -176,7 +156,6 @@ export const getPatientHistoricalSummary: RequestHandler = async (
   try {
     const { patientId } = req.params;
 
-    // Fetch the past 14 log traces to build a concise data payload matrix
     const pastReports = await Report.find({ userId: patientId })
       .sort({ date: -1 })
       .limit(14)
@@ -189,7 +168,6 @@ export const getPatientHistoricalSummary: RequestHandler = async (
       });
     }
 
-    // Format a unified text pipeline block representing patient tracking progress data
     const analyticsTextPipeline = pastReports
       .map(
         (log) =>
@@ -207,7 +185,6 @@ export const getPatientHistoricalSummary: RequestHandler = async (
       "any patterns of worsening medication side effects, and actionable items for their next check-in. " +
       "Be objective, direct, and concise. Respond ONLY with the text summary.";
 
-    // Connect securely to your local running Ollama instance server URL config environment
     const aiTargetResponse = await fetch("http://localhost:11434/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

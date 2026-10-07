@@ -27,6 +27,7 @@ const userSchema = new Schema(
         index: true, // Keeps list queries fast when populating the doctor directory panel
       },
     ],
+    inviteCode: { type: String, default: null, index: true },
   },
   {
     timestamps: true,

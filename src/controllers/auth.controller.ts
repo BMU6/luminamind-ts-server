@@ -36,10 +36,6 @@ async function createTokens(
   _id: string,
   roles: string[],
 ): Promise<TokenResult> {
-  // the return type in this case is not needed since TS can infer all the returned types
-  // but I did it here to know how it would look like
-  // async function createTokens(_id:string, roles:string[]) {
-
   const payload = { roles: roles };
   const secret = ACCESS_JWT_SECRET;
   const tokenOptions = {
@@ -48,7 +44,6 @@ async function createTokens(
   };
 
   const accessToken = jwt.sign(payload, secret, tokenOptions);
-
   const refreshToken = randomUUID();
 
   await RefreshToken.create({
@@ -57,13 +52,11 @@ async function createTokens(
   });
 
   const cookieOptions = createCookieOptions();
-
   return { accessToken, refreshToken, cookieOptions };
 }
 
 export const register: RequestHandler = async (req, res) => {
   const {
-    // UPDATED: Destructure the selected role choice alongside email and password
     body: { email, password, role },
   } = req;
 
@@ -77,7 +70,6 @@ export const register: RequestHandler = async (req, res) => {
   const newUser = await User.create({
     email: email,
     password: hashedPW,
-    // NEW: Save the explicit user category choice straight into your database array fields
     roles: [role || "patient"],
   });
 
@@ -101,8 +93,7 @@ export const login: RequestHandler = async (req, res) => {
   if (!user) {
     throw new Error("Invalid credentials", { cause: { status: 401 } });
   }
-  // Compare the hashed password to the password the user provided
-  // Throw an error if the passwords don't match
+
   const match = await bcrypt.compare(password, user.password);
   if (!match) {
     throw new Error("Invalid credentials", { cause: { status: 401 } });
@@ -120,7 +111,6 @@ export const login: RequestHandler = async (req, res) => {
     .cookie("refreshToken", refreshToken, cookieOptions)
     .json({ accessToken });
 };
-
 export const refresh: RequestHandler = async (req, res) => {
   const { refreshToken: oldRefreshToken } = req.cookies;
   if (!oldRefreshToken) {
@@ -183,11 +173,14 @@ export const me: RequestHandler = async (req, res, next) => {
         cause: { status: 403 },
       });
 
-    const user = await User.findById(decoded.sub).lean();
+    // FIXED: Appended the populate chain call to replace raw Mongo string IDs with full email and role metadata objects
+    const user = await User.findById(decoded.sub)
+      .populate("connectedUsers", "email roles")
+      .lean();
 
     if (!user) throw new Error("User not found", { cause: { status: 404 } });
 
-    // send generic success message and user info in response body
+    // Send generic success message and fully populated user info in the response body
     res.status(200).json({ message: "Valid token", user });
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
@@ -202,7 +195,7 @@ export const me: RequestHandler = async (req, res, next) => {
       typeof error.cause === "object" &&
       "status" in error.cause
     ) {
-      next(error); // re-throw as-is, preserving whatever status/cause it already carried
+      next(error);
     } else {
       next(new Error("Invalid access token.", { cause: { status: 401 } }));
     }
