@@ -1,4 +1,5 @@
 import { Schema, model, type InferSchemaType, type Types } from "mongoose";
+import { encrypted, fieldEncryption } from "#utils";
 
 const medicationSchema = new Schema(
   {
@@ -7,12 +8,14 @@ const medicationSchema = new Schema(
       required: [true, "Medication name is required"],
       trim: true,
       default: "New Medication Entry",
+      ...encrypted,
     },
     dosage: {
       type: String,
       required: [true, "Dosage is required"],
       trim: true,
       default: "0 mg",
+      ...encrypted,
     },
     schedule: {
       morning: { type: Boolean, default: false },
@@ -24,6 +27,7 @@ const medicationSchema = new Schema(
       type: String,
       trim: true,
       default: "",
+      ...encrypted,
     },
     userId: {
       type: Schema.Types.ObjectId,
@@ -38,5 +42,7 @@ const medicationSchema = new Schema(
 );
 
 // export type MedicationRecord = InferSchemaType<typeof medicationSchema> & { _id: Types.ObjectId };
+
+medicationSchema.plugin(fieldEncryption); // name, dosage, effect are stored encrypted
 
 export default model("Medication", medicationSchema);
