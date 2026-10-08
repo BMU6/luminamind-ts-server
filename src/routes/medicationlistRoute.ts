@@ -14,7 +14,7 @@ import { medicationInputSchema } from "#schemas";
 const medicationRouter = Router();
 
 // Who are you (token) and may you (role)? For every medication route.
-medicationRouter.use(accessHandler, authorize("patient"));
+medicationRouter.use(accessHandler, authorize("patient", "doctor"));
 
 medicationRouter
   .route("/")
