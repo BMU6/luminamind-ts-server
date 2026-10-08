@@ -183,7 +183,9 @@ export const me: RequestHandler = async (req, res, next) => {
         cause: { status: 403 },
       });
 
-    const user = await User.findById(decoded.sub).lean();
+    const user = await User.findById(decoded.sub)
+      .populate("connectedUsers", "email roles")
+      .lean();
 
     if (!user) throw new Error("User not found", { cause: { status: 404 } });
 
