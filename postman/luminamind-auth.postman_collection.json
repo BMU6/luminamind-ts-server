@@ -5,10 +5,26 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
-    { "key": "testEmail", "value": "", "type": "string" },
-    { "key": "testPassword", "value": "Str0ng!Passw0rd123", "type": "string" },
-    { "key": "accessToken", "value": "", "type": "string" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "testEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "testPassword",
+      "value": "Str0ng!Passw0rd123",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    }
   ],
   "item": [
     {
@@ -54,16 +70,24 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"confirmPassword\": \"{{testPassword}}\"\n}"
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"confirmPassword\": \"{{testPassword}}\",\n  \"role\": \"patient\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
             },
             "description": "Registers a brand-new user with a unique, generated email. Expects 201 + accessToken in body + refreshToken httpOnly cookie set."
           }
@@ -91,16 +115,24 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"confirmPassword\": \"{{testPassword}}\"\n}"
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"confirmPassword\": \"{{testPassword}}\",\n  \"role\": \"patient\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
             },
             "description": "Re-uses the {{testEmail}} set by the previous request to hit the 'User already exists' path. Run '1. Register - success' first so testEmail is populated."
           }
@@ -123,16 +155,24 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"mismatch.{{$timestamp}}@luminamind.dev\",\n  \"password\": \"Str0ng!Passw0rd123\",\n  \"confirmPassword\": \"Different!Passw0rd456\"\n}"
+              "raw": "{\n  \"email\": \"mismatch.{{$timestamp}}@luminamind.dev\",\n  \"password\": \"Str0ng!Passw0rd123\",\n  \"confirmPassword\": \"Different!Passw0rd456\",\n  \"role\": \"patient\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
             },
             "description": "Tests the Zod .refine() check — password and confirmPassword deliberately don't match."
           }
@@ -155,16 +195,24 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"weakpw.{{$timestamp}}@luminamind.dev\",\n  \"password\": \"short\",\n  \"confirmPassword\": \"short\"\n}"
+              "raw": "{\n  \"email\": \"weakpw.{{$timestamp}}@luminamind.dev\",\n  \"password\": \"short\",\n  \"confirmPassword\": \"short\",\n  \"role\": \"patient\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
             },
             "description": "Password fails min length + missing uppercase/number/special-character regex checks from registerSchema."
           }
@@ -187,16 +235,24 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"Str0ng!Passw0rd123\",\n  \"confirmPassword\": \"Str0ng!Passw0rd123\"\n}"
+              "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"Str0ng!Passw0rd123\",\n  \"confirmPassword\": \"Str0ng!Passw0rd123\",\n  \"role\": \"patient\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
             }
           }
         },
@@ -218,18 +274,66 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"strict.{{$timestamp}}@luminamind.dev\",\n  \"password\": \"Str0ng!Passw0rd123\",\n  \"confirmPassword\": \"Str0ng!Passw0rd123\",\n  \"isAdmin\": true\n}"
+              "raw": "{\n  \"email\": \"strict.{{$timestamp}}@luminamind.dev\",\n  \"password\": \"Str0ng!Passw0rd123\",\n  \"confirmPassword\": \"Str0ng!Passw0rd123\",\n  \"isAdmin\": true,\n  \"role\": \"patient\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
             },
             "description": "registerSchema uses z.strictObject — any field not explicitly declared (like isAdmin here) should cause a 400, not be silently ignored. Good regression test if the schema ever changes."
+          }
+        },
+        {
+          "name": "Register - invalid role (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"role.{{$timestamp}}@luminamind.dev\",\n  \"password\": \"Str0ng!Passw0rd123\",\n  \"confirmPassword\": \"Str0ng!Passw0rd123\",\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Password fails min length + missing uppercase/number/special-character regex checks from registerSchema."
           }
         },
         {
@@ -250,7 +354,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -258,8 +365,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
             },
             "description": "Tests the 'Request body is missing/invalid' branch of validateBody with a technically-present but empty JSON object."
           }
@@ -297,7 +409,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -305,8 +420,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             },
             "description": "Logs in with the same account created in '1. Register - success'. Run that request first (in the same Postman run) so {{testEmail}} is populated."
           }
@@ -329,7 +449,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -337,8 +460,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             }
           }
         },
@@ -365,7 +493,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -373,8 +504,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             },
             "description": "Checks that the error message is identical/generic whether the email doesn't exist or the password is wrong (no user-enumeration leak)."
           }
@@ -409,12 +545,20 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
             },
             "description": "Run after Register or Login so {{accessToken}} is populated. Confirms the User schema's select:false on password actually holds even via .lean()."
           }
@@ -439,8 +583,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/auth/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
             },
             "description": "No Authorization header at all."
           }
@@ -463,12 +612,20 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer this.is.not.a.valid.jwt" }
+              {
+                "key": "Authorization",
+                "value": "Bearer this.is.not.a.valid.jwt"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
             },
             "description": "Garbage token — should hit jwt.verify's failure path, falling into the generic 'Invalid access token' branch (not the TokenExpiredError branch)."
           }
@@ -496,12 +653,20 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{expiredAccessToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{expiredAccessToken}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
             },
             "description": "IMPORTANT: {{expiredAccessToken}} is not auto-generated. To test this: 1) temporarily set ACCESS_TOKEN_TTL to a tiny value like 5 (seconds) in your .env, 2) log in, 3) wait past the TTL, 4) paste that now-expired token as the 'expiredAccessToken' collection variable, then run this request. This is exactly the case your fetchInterceptor's refresh-trigger logic depends on — confirming the WWW-Authenticate header actually appears is the single most important test in this collection for the client integration to work."
           }
@@ -525,7 +690,8 @@
                   "pm.test('Response has a NEW accessToken', function () {",
                   "    const json = pm.response.json();",
                   "    pm.expect(json).to.have.property('accessToken');",
-                  "    pm.expect(json.accessToken).to.not.eql(pm.collectionVariables.get('accessToken'));",
+                  "        // not compared with the old token: two tokens created in the same second are identical (iat has 1 s resolution)",
+                  "        pm.expect(json.accessToken).to.be.a('string');",
                   "    pm.collectionVariables.set('accessToken', json.accessToken);",
                   "});",
                   "",
@@ -542,8 +708,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "description": "Relies on Postman's cookie jar sending the refreshToken cookie automatically (set during Register/Login). No body needed."
           }
@@ -574,8 +745,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "description": "Regression test for refresh-token rotation: a refresh token that was already consumed/rotated must NOT work a second time. This directly tests the concurrent-refresh race scenario discussed for the web client — if this ever returns 200, rotation is broken."
           }
@@ -583,6 +759,18 @@
         {
           "name": "Refresh - no cookie present (401)",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// remove the refreshToken cookie from the cookie jar, so this request really has no cookie",
+                  "pm.cookies.jar().unset(pm.variables.replaceIn('{{baseUrl}}'), 'refreshToken', function (error) {",
+                  "    if (error) { console.error(error); }",
+                  "});"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
@@ -598,14 +786,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Cookie", "value": "", "disabled": false }
+              {
+                "key": "Cookie",
+                "value": "",
+                "disabled": false
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
-            "description": "Run this in a fresh incognito-style request (clear cookies for this domain first, e.g. via Postman's Cookies manager) to simulate no refreshToken cookie at all."
+            "description": "The prerequest script removes the refreshToken cookie, so the request is sent without any cookie."
           }
         }
       ]
@@ -638,8 +835,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "logout"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
             }
           }
         },
@@ -663,8 +865,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "description": "IMPORTANT regression check: run this immediately after 'Logout - success'. It confirms the refresh token was actually deleted from the DB by logout, not just that the cookie was cleared client-side. If this returns 200 instead of 401, logout isn't cleaning up the DB record."
           }
@@ -681,8 +888,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/auth/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
             },
             "description": "Placeholder request. Suggested order for a full manual or Collection-Runner pass:\n1. 1. Register > Register - success\n2. 3. Me > Me - valid token\n3. 4. Refresh > Refresh - success\n4. 3. Me > Me - valid token (again, confirms new token works)\n5. 5. Logout > Logout - success\n6. 5. Logout > Refresh after logout should now fail\n\nUse the Collection Runner with only these six requests selected, in this order, for a one-click end-to-end smoke test."
           }

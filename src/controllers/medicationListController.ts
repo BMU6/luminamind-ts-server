@@ -34,7 +34,7 @@ export const getMedications: RequestHandler<
     const filter = { userId: targetUserId };
     const medications = await MedicationList.find(filter);
 
-    res.json(medications as MedicationOutputDTO[]);
+    res.json(medications as unknown as MedicationOutputDTO[]);
   } catch (error: unknown) {
     if (error instanceof Error) {
       res.status(500).json({ error: error.message });
@@ -75,7 +75,7 @@ export const createMedication: RequestHandler<
       userId: recordOwnerId,
     });
 
-    res.status(201).json(newMedication as MedicationOutputDTO);
+    res.status(201).json(newMedication as unknown as MedicationOutputDTO);
   } catch (error: unknown) {
     if (error instanceof Error) {
       res.status(500).json({ error: error.message });
@@ -115,7 +115,7 @@ export const updateMedication: RequestHandler<
     medication.name = name;
     await medication.save();
 
-    res.json(medication as MedicationOutputDTO);
+    res.json(medication as unknown as MedicationOutputDTO);
   } catch (error: unknown) {
     if (error instanceof Error) {
       res.status(500).json({ error: error.message });

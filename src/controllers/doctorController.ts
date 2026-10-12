@@ -208,7 +208,9 @@ export const getPatientHistoricalSummary: RequestHandler = async (
       );
     }
 
-    const compiledData = await aiTargetResponse.json();
+    const compiledData = (await aiTargetResponse.json()) as {
+      message?: { content?: string };
+    };
     const cleanBriefSummary =
       compiledData.message?.content?.trim() ||
       "Could not construct historical clinical analysis brief.";

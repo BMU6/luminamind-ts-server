@@ -15,7 +15,11 @@
   "description": "**LuminaMind** is a self-tracking application for psychiatric/psychological inpatients, used during a hospital stay (typically 4–12 weeks). Its central purpose is to make the **correlation between medication and subjective health state visible over time** — for example, answering a question like: *\"Two weeks ago we introduced a new medication and increased the dose weekly since — how did my subjective health state develop, day by day, during that period?\"*",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:test": "node --env-file=.env.test.local --conditions development src/app.ts",
+    "test:auth": "newman run postman/luminamind-auth.postman_collection.json -e postman/luminamind-auth.postman_environment.json",
+    "test:api": "newman run postman/luminamind-api.postman_collection.json -e postman/luminamind-api.postman_environment.json --folder \"0. Setup\" --folder \"1. Reports\" --folder \"2. Medications\" --folder \"3. Home\" --folder \"4. Doctor link\" --folder \"5. Chat\" --folder \"6. Unknown routes\"",
+    "test:known-issues": "newman run postman/luminamind-api.postman_collection.json -e postman/luminamind-api.postman_environment.json --folder \"0. Setup\" --folder \"1. Reports\" --folder \"9. Known issues\"",
+    "test": "npm run test:auth && npm run test:api",
     "dev": "node --watch --env-file=.env.development.local --conditions development src/app.ts",
     "prebuild": "rm -rf dist",
     "build": "tsc",
