@@ -63,7 +63,8 @@ async function createTokens(
 
 export const register: RequestHandler = async (req, res) => {
   const {
-    body: { email, password},
+    // UPDATED: Destructure the selected role choice alongside email and password
+    body: { email, password, role },
   } = req;
 
   const user = await User.findOne({ email: email });
@@ -76,6 +77,8 @@ export const register: RequestHandler = async (req, res) => {
   const newUser = await User.create({
     email: email,
     password: hashedPW,
+    // NEW: Save the explicit user category choice straight into your database array fields
+    roles: [role || "patient"],
   });
 
   const { accessToken, refreshToken, cookieOptions } = await createTokens(
@@ -180,7 +183,9 @@ export const me: RequestHandler = async (req, res, next) => {
         cause: { status: 403 },
       });
 
-    const user = await User.findById(decoded.sub).lean();
+    const user = await User.findById(decoded.sub)
+      .populate("connectedUsers", "email roles")
+      .lean();
 
     if (!user) throw new Error("User not found", { cause: { status: 404 } });
 
