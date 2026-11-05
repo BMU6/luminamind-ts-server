@@ -310,6 +310,103 @@
               ]
             }
           }
+        },
+        {
+          "name": "Setup - doctor creates an invite code (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Code is kept for the next request\", function () {",
+                  "    const code = pm.response.json().code;",
+                  "    pm.expect(code).to.match(/^[A-Z0-9]{6}$/);",
+                  "    pm.collectionVariables.set('setupInviteCode', code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenD}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctor/doctor/generate-code",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doctor",
+                "doctor",
+                "generate-code"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Setup - patient A links to the doctor (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Has a message\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctor/patient/redeem-code",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doctor",
+                "patient",
+                "redeem-code"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{setupInviteCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
         }
       ],
       "description": "Creates two patients and one doctor (unique e-mail addresses per run). All later folders use their tokens."
@@ -962,6 +1059,49 @@
           }
         },
         {
+          "name": "Get one report - invalid id (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Response has an error message', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/xyz",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "xyz"
+              ]
+            },
+            "description": "Mongoose throws a CastError for an id that is not an ObjectId. It is not mapped to a 4xx status."
+          }
+        },
+        {
           "name": "Update report - change mood (200)",
           "event": [
             {
@@ -1156,6 +1296,63 @@
                 }
               }
             }
+          }
+        },
+        {
+          "name": "Update report - partial body keeps the other fields (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Mood changed, message is still 'Better after lunch.'\", function () {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.mood).to.eql(2);",
+                  "    pm.expect(r.message).to.eql('Better after lunch.');",
+                  "});",
+                  "pm.test('Medications of the report are still there', function () {",
+                  "    pm.expect(pm.response.json().activeMedications[0].name).to.eql('Sertraline');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/{{reportIdA}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "{{reportIdA}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mood\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "reportUpdateSchema = reportInputSchema.partial(). Fields with a default (message, activeMedications) are filled with their default when they are missing, so a PUT with only {mood} overwrites the saved message with an empty text."
           }
         },
         {
@@ -2062,6 +2259,110 @@
           }
         },
         {
+          "name": "Update medication - partial body keeps the other fields (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Dosage changed, name, effect and schedule are untouched', function () {",
+                  "    const m = pm.response.json();",
+                  "    pm.expect(m.dosage).to.eql('150 mg');",
+                  "    pm.expect(m.name).to.eql('Sertraline');",
+                  "    pm.expect(m.effect).to.eql('Slightly tired in the morning');",
+                  "    pm.expect(m.schedule.morning).to.eql(true);",
+                  "    pm.expect(m.schedule.night).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/medicationlist/{{medIdA}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicationlist",
+                "{{medIdA}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dosage\": \"150 mg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update medication - partial body with an invalid value (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/medicationlist/{{medIdA}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicationlist",
+                "{{medIdA}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dosage\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
           "name": "Delete medication - owned by another patient (404)",
           "event": [
             {
@@ -2309,6 +2610,411 @@
               "path": [
                 "medicationlist",
                 "{{medIdA}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete medication - invalid id (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Response has an error message', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/medicationlist/xyz",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicationlist",
+                "xyz"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create medication - without effect, effect is empty (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('Effect is empty (default of the model)', function () {",
+                  "    const m = pm.response.json();",
+                  "    pm.expect(m.effect).to.eql('');",
+                  "    pm.collectionVariables.set('medIdNoEffect', m._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/medicationlist",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicationlist"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lithium\",\n  \"dosage\": \"400 mg\",\n  \"schedule\": {\n    \"morning\": true,\n    \"noon\": false,\n    \"evening\": false,\n    \"night\": false\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete medication - the one without effect (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/medicationlist/{{medIdNoEffect}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicationlist",
+                "{{medIdNoEffect}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Setup - patient B adds a medication (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.collectionVariables.set('medIdB', pm.response.json()._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/medicationlist",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicationlist"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sertraline\",\n  \"dosage\": \"50 mg\",\n  \"schedule\": {\n    \"morning\": true,\n    \"noon\": false,\n    \"evening\": false,\n    \"night\": true\n  },\n  \"effect\": \"Slightly tired in the morning\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List medications - doctor cannot read the list of a patient who is not connected (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403 or 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([403, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenD}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/medicationlist?patientId={{idB}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicationlist"
+              ],
+              "query": [
+                {
+                  "key": "patientId",
+                  "value": "{{idB}}"
+                }
+              ]
+            },
+            "description": "getMedications takes patientId from the query for every doctor, without checking connectedUsers."
+          }
+        },
+        {
+          "name": "Update medication - doctor cannot change the medication of a patient who is not connected (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403 or 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([403, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenD}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/medicationlist/{{medIdB}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicationlist",
+                "{{medIdB}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sertraline\",\n  \"dosage\": \"999 mg\",\n  \"schedule\": {\n    \"morning\": true,\n    \"noon\": false,\n    \"evening\": false,\n    \"night\": true\n  },\n  \"effect\": \"Slightly tired in the morning\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "updateMedication looks the entry up by id only when the user is a doctor."
+          }
+        },
+        {
+          "name": "Delete medication - doctor cannot delete the medication of a patient who is not connected (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403 or 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([403, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenD}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/medicationlist/{{medIdB}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicationlist",
+                "{{medIdB}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create medication - doctor cannot add one for a patient who is not connected (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403 or 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([403, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenD}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/medicationlist",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicationlist"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sertraline\",\n  \"dosage\": \"50 mg\",\n  \"schedule\": {\n    \"morning\": true,\n    \"noon\": false,\n    \"evening\": false,\n    \"night\": true\n  },\n  \"effect\": \"Slightly tired in the morning\",\n  \"patientId\": \"{{idB}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List medications - doctor with an invalid patientId (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400 or 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenD}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/medicationlist?patientId=xyz",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medicationlist"
+              ],
+              "query": [
+                {
+                  "key": "patientId",
+                  "value": "xyz"
+                }
               ]
             }
           }
@@ -3739,6 +4445,89 @@
               ]
             }
           }
+        },
+        {
+          "name": "Patient summary - patient B is not connected to the doctor (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403 or 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([403, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenD}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctor/doctor/patient-summary/{{idB}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doctor",
+                "doctor",
+                "patient-summary",
+                "{{idB}}"
+              ]
+            },
+            "description": "getPatientHistoricalSummary does not check that patientId is in the doctor's connectedUsers. Any doctor can read (and send to the AI) the data of any patient whose id is known."
+          }
+        },
+        {
+          "name": "Patient summary - invalid patient id (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400 or 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenD}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctor/doctor/patient-summary/xyz",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doctor",
+                "doctor",
+                "patient-summary",
+                "xyz"
+              ]
+            }
+          }
         }
       ],
       "description": "The summary for a connected patient needs a running Ollama, so it is not part of the automatic run."
@@ -4003,6 +4792,55 @@
           }
         },
         {
+          "name": "Send - text with only spaces (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverId\": \"{{idD}}\",\n  \"text\": \"    \"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "The schema checks min(1) before trim(), so '    ' passes the check, becomes '' and then fails the Mongoose required validator (500)."
+          }
+        },
+        {
           "name": "Send - text longer than 2000 characters (400)",
           "event": [
             {
@@ -4114,6 +4952,54 @@
           }
         },
         {
+          "name": "Send - to himself (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverId\": \"{{idA}}\",\n  \"text\": \"note to self\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
           "name": "Send - receiver does not exist (404)",
           "event": [
             {
@@ -4162,6 +5048,55 @@
                 }
               }
             }
+          }
+        },
+        {
+          "name": "Send - patient A to patient B, not connected (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403 or 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([403, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverId\": \"{{idB}}\",\n  \"text\": \"hello stranger\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "sendMessage only checks that the receiver exists. Chats should be limited to connected doctor/patient pairs."
           }
         },
         {
@@ -4386,6 +5321,49 @@
           }
         },
         {
+          "name": "History - invalid contact id (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Response has an error message', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/history/xyz",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "history",
+                "xyz"
+              ]
+            }
+          }
+        },
+        {
           "name": "History - no token (401)",
           "event": [
             {
@@ -4508,681 +5486,8 @@
     },
     {
       "name": "9. Known issues",
-      "item": [
-        {
-          "name": "**Known issue:** partial update must keep the other fields (message)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "pm.test(\"message is still 'Better after lunch.'\", function () {",
-                  "    pm.expect(pm.response.json().message).to.eql('Better after lunch.');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenA}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/reports/{{reportIdA}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "reports",
-                "{{reportIdA}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mood\": 2\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "reportUpdateSchema = reportInputSchema.partial(). Fields with a default (message, activeMedications) are filled with their default when they are missing, so a PUT with only {mood} overwrites the saved message with an empty text."
-          }
-        },
-        {
-          "name": "**Known issue:** report with an invalid id must answer 400 or 404, not 500",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 400 or 404\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenA}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/reports/xyz",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "reports",
-                "xyz"
-              ]
-            },
-            "description": "Mongoose throws a CastError for an id that is not an ObjectId. It is not mapped to a 4xx status."
-          }
-        },
-        {
-          "name": "**Known issue:** medication with an invalid id must answer 400 or 404, not 500",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 400 or 404\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenA}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/medicationlist/xyz",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "medicationlist",
-                "xyz"
-              ]
-            }
-          }
-        },
-        {
-          "name": "**Known issue:** chat history with an invalid contact id must answer 400 or 404, not 500",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 400 or 404\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenA}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/chat/history/xyz",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "chat",
-                "history",
-                "xyz"
-              ]
-            }
-          }
-        },
-        {
-          "name": "**Known issue:** doctor must not read the summary of a patient who is not connected (patient B)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 403 or 404\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([403, 404]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenD}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/doctor/doctor/patient-summary/{{idB}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "doctor",
-                "doctor",
-                "patient-summary",
-                "{{idB}}"
-              ]
-            },
-            "description": "getPatientHistoricalSummary does not check that patientId is in the doctor's connectedUsers. Any doctor can read (and send to the AI) the data of any patient whose id is known."
-          }
-        },
-        {
-          "name": "**Known issue:** doctor summary with an invalid patient id must answer 400 or 404, not 500",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 400 or 404\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenD}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/doctor/doctor/patient-summary/xyz",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "doctor",
-                "doctor",
-                "patient-summary",
-                "xyz"
-              ]
-            }
-          }
-        },
-        {
-          "name": "**Known issue:** a patient must not be able to message a user he is not connected with (patient A -> patient B)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 403 or 404\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([403, 404]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenA}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/chat/send",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "chat",
-                "send"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"receiverId\": \"{{idB}}\",\n  \"text\": \"hello stranger\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "sendMessage only checks that the receiver exists. Chats should be limited to connected doctor/patient pairs."
-          }
-        },
-        {
-          "name": "**Known issue:** setup for the next three: patient B adds a medication",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 201', function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "pm.collectionVariables.set('medIdB', pm.response.json()._id);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenB}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/medicationlist",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "medicationlist"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Sertraline\",\n  \"dosage\": \"50 mg\",\n  \"schedule\": {\n    \"morning\": true,\n    \"noon\": false,\n    \"evening\": false,\n    \"night\": true\n  },\n  \"effect\": \"Slightly tired in the morning\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "**Known issue:** doctor must not read the medications of a patient who is not connected (patient B)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 403 or 404\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([403, 404]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenD}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/medicationlist?patientId={{idB}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "medicationlist"
-              ],
-              "query": [
-                {
-                  "key": "patientId",
-                  "value": "{{idB}}"
-                }
-              ]
-            },
-            "description": "getMedications takes patientId from the query for every doctor, without checking connectedUsers."
-          }
-        },
-        {
-          "name": "**Known issue:** doctor must not change the medication of a patient who is not connected (patient B)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 403 or 404\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([403, 404]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenD}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/medicationlist/{{medIdB}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "medicationlist",
-                "{{medIdB}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Sertraline\",\n  \"dosage\": \"999 mg\",\n  \"schedule\": {\n    \"morning\": true,\n    \"noon\": false,\n    \"evening\": false,\n    \"night\": true\n  },\n  \"effect\": \"Slightly tired in the morning\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "updateMedication looks the entry up by id only when the user is a doctor."
-          }
-        },
-        {
-          "name": "**Known issue:** doctor must not delete the medication of a patient who is not connected (patient B)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 403 or 404\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([403, 404]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenD}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/medicationlist/{{medIdB}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "medicationlist",
-                "{{medIdB}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "**Known issue:** doctor must not add a medication for a patient who is not connected (patient B)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 403 or 404\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([403, 404]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenD}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/medicationlist",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "medicationlist"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Sertraline\",\n  \"dosage\": \"50 mg\",\n  \"schedule\": {\n    \"morning\": true,\n    \"noon\": false,\n    \"evening\": false,\n    \"night\": true\n  },\n  \"effect\": \"Slightly tired in the morning\",\n  \"patientId\": \"{{idB}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "**Known issue:** doctor with an invalid patientId must answer 400, not 500",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 400 or 404\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenD}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/medicationlist?patientId=xyz",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "medicationlist"
-              ],
-              "query": [
-                {
-                  "key": "patientId",
-                  "value": "xyz"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "**Known issue:** a message with only spaces must answer 400, not 500",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 400\", function () {",
-                  "    pm.expect(pm.response.code).to.eql(400);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenA}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/chat/send",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "chat",
-                "send"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"receiverId\": \"{{idD}}\",\n  \"text\": \"    \"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "The schema checks min(1) before trim(), so '    ' passes the check, becomes '' and then fails the Mongoose required validator (500)."
-          }
-        },
-        {
-          "name": "**Known issue:** a user must not be able to message himself",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 400\", function () {",
-                  "    pm.expect(pm.response.code).to.eql(400);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{tokenA}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/chat/send",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "chat",
-                "send"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"receiverId\": \"{{idA}}\",\n  \"text\": \"note to self\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "description": "These requests check how the API SHOULD behave. They fail today and show real gaps found while writing the tests. Run them with `npm run test:known-issues`. Once a gap is fixed, move its request into the normal folders."
+      "item": [],
+      "description": "Empty at the moment: all gaps found while writing the tests are fixed. Put a request here when you find a new gap that is not fixed yet (it should FAIL until the fix), run it with `npm run test:known-issues`, and move it into the normal folders once it passes."
     }
   ]
 }

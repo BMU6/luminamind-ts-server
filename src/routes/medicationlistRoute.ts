@@ -6,15 +6,22 @@ import {
   deleteMedication,
 } from "#controllers";
 
-import { accessHandler, authorize, validateBody } from "#middleware";
+import {
+  accessHandler,
+  authorize,
+  validateBody,
+  validateIdParam,
+} from "#middleware";
 import { medicationInputSchema } from "#schemas";
 
-//const medicationUpdateSchema = medicationInputSchema.partial();
+// PUT works like PATCH: the client may send only the fields it wants to change.
+const medicationUpdateSchema = medicationInputSchema.partial();
 
 const medicationRouter = Router();
 
 // Who are you (token) and may you (role)? For every medication route.
 medicationRouter.use(accessHandler, authorize("patient", "doctor"));
+medicationRouter.param("id", validateIdParam); // malformed id -> 400
 
 medicationRouter
   .route("/")
@@ -24,7 +31,7 @@ medicationRouter
 medicationRouter
   .route("/:id")
 
-  .put(validateBody(medicationInputSchema), updateMedication)
+  .put(validateBody(medicationUpdateSchema), updateMedication)
   .delete(deleteMedication);
 
 export default medicationRouter;

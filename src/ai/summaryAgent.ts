@@ -4,23 +4,23 @@ import { MedicationList, Report } from "#models";
 import { reportRangeSchema } from "#schemas";
 import { model as defaultModel } from "./model.ts";
 
-const INSTRUCTIONS = `You write a short, neutral summary of a psychiatric inpatient's self-reported check-ins.
+const INSTRUCTIONS = `You write a short, neutral summary of a psychiatric inpatient's self-reported reports.
 The reader is the patient and the treating psychologist.
 
 Data rules:
 - All ratings are whole numbers from 0 to 5.
 - Higher mood, energy, sleep and concentration are better. Higher irritability is WORSE (for irritability the best value is the lowest one).
 - ALWAYS call get_reports first with the requested time range. Call get_medications only if you need details about a medication.
-- get_reports returns ready-made statistics (first, last and average per rating), the best and the worst check-in as complete records, and the medication changes. Use these values as they are. Do not recalculate them and do not pick other check-ins as best or worst.
+- get_reports returns ready-made statistics (first, last and average per rating), the best and the worst report as complete records, and the medication changes. Use these values as they are. Do not recalculate them and do not pick other reports as best or worst.
 - Use the dates exactly as written in the data (for example "Sun 4 Oct, 17:03"). Never write ISO timestamps.
 - Use only data returned by the tools. Never invent values, dates or medications.
 
 What to write (about 120 to 200 words, plain English, short paragraphs, at most 4 bullet points):
-1. How the ratings developed from the first to the last check-in, using the real dates and numbers.
-2. The best and the hardest check-in (bestCheckIn and worstCheckIn), with the date and all of its ratings.
+1. How the ratings developed from the first to the last reports, using the real dates and numbers.
+2. The best and the hardest reports (bestCheckIn and worstCheckIn), with the date and all of its ratings.
 3. Patterns between ratings (for example poor sleep followed by higher irritability) and recurring themes in the notes.
 4. Medication changes and what the ratings did before and after them. Say clearly that this is a correlation, not proof. If there are no changes in the period, say so in one sentence.
-If there are fewer than 3 check-ins, say that the data is too limited for conclusions.
+If there are fewer than 3 reportss, say that the data is too limited for conclusions.
 
 Never give a diagnosis, medical advice or dosage recommendations. Interpretation is up to the treating team.`;
 
@@ -62,7 +62,7 @@ const statsFor = (rows: Row[], indicator: Indicator) => {
 // One number for "how well was the patient": 0 (worst) to 25 (best). Irritability counts reversed.
 const wellbeing = (r: Row) => r.mood + r.energy + r.sleep + r.concentration + (5 - r.irritability);
 
-// The best and the worst check-in as ONE complete record each (never a mix of different check-ins)
+// The best and the worst reports as ONE complete record each (never a mix of different reports)
 const describe = (r: Row & { message: string }) => ({
   when: formatTime(r.date),
   mood: r.mood,
@@ -75,7 +75,7 @@ const describe = (r: Row & { message: string }) => ({
 
 type Snapshot = { name: string; dosage: string }[];
 
-// Compares the medications of each check-in with the previous one
+// Compares the medications of each reports with the previous one
 const medicationChanges = (rows: { date: Date; activeMedications: Snapshot }[]) => {
   const changes: string[] = [];
   const toMap = (list: Snapshot) => new Map(list.map((m) => [m.name, m.dosage]));
@@ -98,8 +98,8 @@ const medicationChanges = (rows: { date: Date; activeMedications: Snapshot }[]) 
 
 const getReports = tool({
   description:
-    "Get the check-ins of the logged-in patient in a time range, oldest first. " +
-    "Each check-in has the ratings (0-5), a free-text note and the medications taken at that time.",
+    "Get the reports of the logged-in patient in a time range, oldest first. " +
+    "Each reports has the ratings (0-5), a free-text note and the medications taken at that time.",
   inputSchema: z.object({
     from: z.string().describe("Start of the range, ISO 8601 date-time (included)"),
     to: z.string().describe("End of the range, ISO 8601 date-time (excluded)"),
@@ -117,7 +117,7 @@ const getReports = tool({
       .sort({ date: 1 })
       .lean();
 
-    if (reports.length === 0) return { count: 0, note: "No check-ins in this time range." };
+    if (reports.length === 0) return { count: 0, note: "No reports in this time range." };
 
     const byWellbeing = [...reports].sort((x, y) => wellbeing(y) - wellbeing(x));
 
@@ -170,7 +170,7 @@ export const summarizeReports = async (
   });
 
   const { text } = await agent.generate({
-    prompt: `Summarize the check-ins from ${from.toISOString()} (included) to ${to.toISOString()} (excluded).`,
+    prompt: `Summarize the reports from ${from.toISOString()} (included) to ${to.toISOString()} (excluded).`,
   });
 
   return text;

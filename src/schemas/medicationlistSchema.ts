@@ -15,8 +15,9 @@ export const medicationInputSchema = z.object({
     night: z.boolean(),
   }),
 
-  // optional, an empty effect is allowed
-  effect: z.string().trim().default(""),
+  // optional, an empty effect is allowed. No Zod default: the Medication model already
+  // defaults to "", and a default here would overwrite the saved effect on a partial PUT.
+  effect: z.string().trim().optional(),
 
   // ADD THESE DYNAMIC OPTIONAL ATTRIBUTES SO THE DOCTOR WORKSPACE CAN PASS TARGET IDENTIFIERS SAFELY
   userId: z.string().optional(),

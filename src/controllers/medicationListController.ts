@@ -3,6 +3,11 @@ import { medicationInputSchema } from "#schemas";
 import { z } from "zod";
 import type { Types } from "mongoose";
 import { MedicationList } from "#models";
+import {
+  getConnectedIds,
+  isConnectedTo,
+  isValidId,
+} from "../utils/connections.ts";
 
 type MedicationInputDTO = z.infer<typeof medicationInputSchema>;
 type MedicationOutputDTO = MedicationInputDTO & {
@@ -28,8 +33,20 @@ export const getMedications: RequestHandler<
     // UPDATED FILTER STRATEGY:
     // If a clinician is requesting data, filter using the incoming patientId query parameter.
     // If a patient is requesting data, fall back strictly to their authenticated account token ID context.
-    const targetUserId =
-      isDoctor && req.query.patientId ? req.query.patientId : req.user!.id;
+    let targetUserId = req.user!.id;
+    if (isDoctor && req.query.patientId) {
+      const { patientId } = req.query;
+      if (!isValidId(patientId)) {
+        return res.status(400).json({ error: "Invalid patient id." });
+      }
+      // a doctor may only read the medications of connected patients
+      if (!(await isConnectedTo(req.user!.id, patientId))) {
+        return res
+          .status(403)
+          .json({ error: "This patient is not connected to you." });
+      }
+      targetUserId = patientId;
+    }
 
     const filter = { userId: targetUserId };
     const medications = await MedicationList.find(filter);
@@ -67,6 +84,18 @@ export const createMedication: RequestHandler<
         });
     }
 
+    if (isDoctor) {
+      if (!isValidId(recordOwnerId)) {
+        return res.status(400).json({ error: "Invalid patient id." });
+      }
+      // a doctor may only add medications for connected patients
+      if (!(await isConnectedTo(req.user!.id, recordOwnerId))) {
+        return res
+          .status(403)
+          .json({ error: "This patient is not connected to you." });
+      }
+    }
+
     // Strip out the extra frontend tracking parameters before feeding the object to Mongoose
     const { patientId, userId, ...medicationData } = req.body;
 
@@ -88,7 +117,7 @@ export const createMedication: RequestHandler<
 export const updateMedication: RequestHandler<
   IDParams,
   MedicationOutputDTO | { error: string },
-  MedicationInputDTO
+  Partial<MedicationInputDTO>
 > = async (req, res) => {
   try {
     const {
@@ -101,18 +130,22 @@ export const updateMedication: RequestHandler<
     // UPDATED LOOKUP QUERIES:
     // If a doctor is logged in, find by document ID regardless of the user field (assuming route-level authentication guards roles).
     // If a patient is logged in, restrict the filter matching strictly to their own account identity.
+    // A doctor only reaches medications of connected patients.
     const lookupFilter = isDoctor
-      ? { _id: id }
+      ? { _id: id, userId: { $in: await getConnectedIds(req.user!.id) } }
       : { _id: id, userId: req.user!.id };
 
     const medication = await MedicationList.findOne(lookupFilter);
     if (!medication)
       return res.status(404).json({ error: "Medication record not found" });
 
-    medication.dosage = dosage;
-    medication.effect = effect;
-    medication.schedule = schedule;
-    medication.name = name;
+    // PUT works like PATCH: only the fields that were sent are changed.
+    const changes = Object.fromEntries(
+      Object.entries({ name, dosage, effect, schedule }).filter(
+        ([, value]) => value !== undefined,
+      ),
+    );
+    medication.set(changes);
     await medication.save();
 
     res.json(medication as unknown as MedicationOutputDTO);
@@ -138,8 +171,9 @@ export const deleteMedication: RequestHandler<
 
     // UPDATED REMOVAL STRATEGY:
     // Apply role rules symmetrically to the delete mechanism.
+    // A doctor only reaches medications of connected patients.
     const lookupFilter = isDoctor
-      ? { _id: id }
+      ? { _id: id, userId: { $in: await getConnectedIds(req.user!.id) } }
       : { _id: id, userId: req.user!.id };
 
     const medication = await MedicationList.findOneAndDelete(lookupFilter);

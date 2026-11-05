@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 import { User, Report } from "#models";
+import { isConnectedTo, isValidId } from "../utils/connections.ts";
 
 /**
  * 1. POST /doctor/doctor/generate-code
@@ -156,6 +157,16 @@ export const getPatientHistoricalSummary: RequestHandler = async (
   try {
     const { patientId } = req.params;
 
+    if (!isValidId(patientId)) {
+      return res.status(400).json({ error: "Invalid patient id." });
+    }
+    // a doctor may only read patients who are connected with him
+    if (!(await isConnectedTo(req.user!.id, patientId))) {
+      return res
+        .status(403)
+        .json({ error: "This patient is not connected to you." });
+    }
+
     const pastReports = await Report.find({ userId: patientId })
       .sort({ date: -1 })
       .limit(14)
@@ -182,7 +193,7 @@ export const getPatientHistoricalSummary: RequestHandler = async (
       "You are an expert clinical psychiatric medical writing assistant. " +
       "Analyze the historical sequence of tracking indicators for this patient. " +
       "Provide a highly professional 3-sentence summary highlighting the trajectory of their mood, " +
-      "any patterns of worsening medication side effects, and actionable items for their next check-in. " +
+      "any patterns of worsening medication side effects, and actionable items for their next Report. " +
       "Be objective, direct, and concise. Respond ONLY with the text summary.";
 
     const aiTargetResponse = await fetch("http://localhost:11434/api/chat", {
