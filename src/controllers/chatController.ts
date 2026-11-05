@@ -1,12 +1,17 @@
 import type { RequestHandler } from "express";
 import { User, Message } from "#models";
-import { sendMessageSchema } from "#schemas"; // Your Zod validation gateway layout
+import type { SendMessageInput } from "#schemas";
+import { isConnectedTo } from "../utils/connections.ts";
 
 /**
  * 1. POST /chat/send
  * Submits a new text message entry into the linear conversation timeline channel
  */
-export const sendMessage: RequestHandler = async (req, res, next) => {
+export const sendMessage: RequestHandler<
+  unknown,
+  unknown,
+  SendMessageInput
+> = async (req, res, next) => {
   try {
     const senderId = req.user?.id;
     if (!senderId)
@@ -14,8 +19,14 @@ export const sendMessage: RequestHandler = async (req, res, next) => {
         .status(401)
         .json({ error: "Authentication verified footprint is missing." });
 
-    // Validates the text body inputs against our structural filters
-    const { receiverId, text } = sendMessageSchema.parse(req.body);
+    // The body was already validated and trimmed by validateBody in chatRoute
+    const { receiverId, text } = req.body;
+
+    if (receiverId === senderId) {
+      return res
+        .status(400)
+        .json({ error: "You cannot send a message to yourself." });
+    }
 
     // Verify that the destination contact footprint actually exists in MongoDB
     const recipientExists = await User.findById(receiverId);
@@ -23,6 +34,13 @@ export const sendMessage: RequestHandler = async (req, res, next) => {
       return res
         .status(404)
         .json({ error: "Target messaging contact profile not found." });
+    }
+
+    // Chat is only allowed between connected users (patient <-> doctor)
+    if (!(await isConnectedTo(senderId, receiverId))) {
+      return res
+        .status(403)
+        .json({ error: "You are not connected with this user." });
     }
 
     const newMessage = await Message.create({

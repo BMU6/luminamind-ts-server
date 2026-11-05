@@ -6,7 +6,7 @@ Two collections, both run automatically from the terminal with Newman:
 |---|---|---|
 | `luminamind-auth.postman_collection.json` | register, login, me, refresh, logout | `npm run test:auth` |
 | `luminamind-api.postman_collection.json` (folders 0-6) | reports, medications, home, doctor link, chat, roles, ownership | `npm run test:api` |
-| `luminamind-api.postman_collection.json` (folder 9) | gaps found while writing the tests, they FAIL on purpose | `npm run test:known-issues` |
+| `luminamind-api.postman_collection.json` (folder 9) | new gaps that are not fixed yet, they FAIL on purpose (empty at the moment) | `npm run test:known-issues` |
 
 `npm test` runs auth + api.
 
@@ -53,3 +53,7 @@ For the api collection run the folders 0 to 6 in order (folder 0 creates the use
 
 Requests that describe how the API should behave but does not yet. When one is fixed,
 move its request into the normal folders so it protects the fix from now on.
+
+The folder is empty at the moment: all gaps found so far are fixed (partial update of reports and
+medications, doctor access only for connected patients, chat validation, malformed ids answer 400).
+When you find a new gap, put a failing request here first.
