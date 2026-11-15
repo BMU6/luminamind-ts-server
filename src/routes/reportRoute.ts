@@ -7,13 +7,19 @@ import {
   deleteReport,
 } from "#controllers";
 
-import { accessHandler, authorize, validateBody } from "#middleware";
+import {
+  accessHandler,
+  authorize,
+  validateBody,
+  validateIdParam,
+} from "#middleware";
 import { reportInputSchema } from "#schemas";
 const reportUpdateSchema = reportInputSchema.partial();
 const reportRouter = Router();
 
 // Who are you (token) and may you (role)? For every report route.
 reportRouter.use(accessHandler, authorize("patient"));
+reportRouter.param("id", validateIdParam); // malformed id -> 400
 
 reportRouter
   .route("/")

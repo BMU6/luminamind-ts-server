@@ -37,7 +37,7 @@ export const getHomeReports: RequestHandler<unknown, HomeReportDTO[]> = async (r
   res.json(reports);
 };
 
-// POST /home/summary  { from, to }  -> AI summary of the check-ins of the logged-in user in that range
+// POST /home/summary  { from, to }  -> AI summary of the Reports of the logged-in user in that range
 export const summarizeHomeReports: RequestHandler<unknown, { summary: string }> = async (req, res) => {
   const userId = req.user?.id;
   if (!userId) throw new Error("Authentication required.", { cause: { status: 401 } });

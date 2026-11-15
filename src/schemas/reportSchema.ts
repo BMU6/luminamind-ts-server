@@ -74,7 +74,9 @@ export const reportInputSchema = z.object({
     .min(0, "Sleep cannot be below 0")
     .max(5, "Sleep cannot exceed 5"),
 
-  message: z.string().trim().default(""),
+  // no default here: the Report model already defaults to "", and a Zod default would
+  // overwrite the saved text on a partial PUT (.partial() keeps defaults)
+  message: z.string().trim().optional(),
 
   // CHANGE THIS BLOCK: Enforce optional or default array structure parsing safely
   activeMedications: z
